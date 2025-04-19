@@ -14,6 +14,8 @@ void main() async {
   // Ouverture de Box (une sorte de base de données locale) ---- >
   await Hive.openBox("favoris");
 
+  // fermer la box si l'application est fermée -------------- >
+  // await Hive.box("favoris").close();
   runApp(
     MultiProvider(
       providers: [

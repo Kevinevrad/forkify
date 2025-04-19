@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:forkify_app/data/class/api_call.dart';
 import 'package:forkify_app/data/class/recipe_data.dart';
 import 'package:forkify_app/data/constants.dart';
+import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 
 class ModelProvider with ChangeNotifier {
@@ -173,7 +174,6 @@ class ModelProvider with ChangeNotifier {
   }
 
   //
-  //
   //  POST DATA ---------------------------
   Future<void> addRecipeRequest(
     Map<String, dynamic> recipe,
@@ -191,6 +191,11 @@ class ModelProvider with ChangeNotifier {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         debugPrint('Success! Response: ${response.body}');
+        var res = jsonDecode(response.body);
+        var data = formatRecipe(RecipeData.fromJson(res['data']['recipe']));
+        debugPrint('Data: $data');
+        // Save the recipe to Hive
+        saveRecipe(data);
         showBottomPopUp(context);
       } else {
         debugPrint('Response: ${response.body}');
@@ -235,4 +240,21 @@ class ModelProvider with ChangeNotifier {
   }
 
   //  SAVE FAVORIS ------------------------->
+  void saveRecipe(Map<String, dynamic> recipe) {
+    final box = Hive.box('favoris');
+    List prefs = box.get('recipeList', defaultValue: []);
+
+    // Check if the recipe is already bookmarked
+    if (prefs.any((rep) => rep['id'] == recipe['id'])) {
+      // If it is, remove it from the list and set isBookmarked to false
+      recipe['isBookmarked'] = false;
+      prefs.remove(recipe);
+    } else {
+      // If it isn't, add it to the list and set isBookmarked to true
+      recipe['isBookmarked'] = true;
+      prefs.add(recipe);
+    }
+
+    box.put('recipeList', prefs);
+  }
 }

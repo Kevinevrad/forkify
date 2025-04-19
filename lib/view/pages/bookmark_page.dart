@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:forkify_app/data/providers/model_provider.dart';
+import 'package:forkify_app/view/pages/recipe_page.dart';
 import 'package:forkify_app/widget/card_widget.dart';
 import 'package:forkify_app/widget/message_widget.dart';
+import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 
 class BookmarkPage extends StatefulWidget {
@@ -12,6 +14,20 @@ class BookmarkPage extends StatefulWidget {
 }
 
 class _BookmarkPageState extends State<BookmarkPage> {
+  final box = Hive.box('favoris');
+  List recipesSaved = [];
+  List loadData() {
+    List recipes = box.get('recipeList') ?? [];
+    return recipes;
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    recipesSaved = loadData();
+  }
+
   @override
   Widget build(BuildContext context) {
     final modelprovider = Provider.of<ModelProvider>(context);
@@ -50,52 +66,41 @@ class _BookmarkPageState extends State<BookmarkPage> {
             ),
             child: Column(
               mainAxisAlignment:
-                  modelprovider.bookmarkArray.isEmpty
+                  recipesSaved.isEmpty
                       ? MainAxisAlignment.center
                       : MainAxisAlignment.start,
               children: [
-                if (modelprovider.bookmarkArray.isEmpty) ...[
+                if (recipesSaved.isEmpty) ...[
                   MessageWidget(
                     message: 'Go Booked some recipes...',
                     icon: Icons.emoji_emotions,
                   ),
                 ],
 
-                if (modelprovider.bookmarkArray.isNotEmpty) ...[
+                if (recipesSaved.isNotEmpty) ...[
                   Expanded(
                     child: ListView.builder(
-                      itemCount: modelprovider.bookmarkArray.length,
+                      itemCount: recipesSaved.length,
                       itemBuilder: (context, index) {
                         return CardWidget(
                           isBookmarked: true,
-                          imageUrl:
-                              // bookmarkSave.value[index]['imageUrl'],
-                              modelprovider.bookmarkArray[index]['imageUrl'],
-                          id:
-                              // bookmarkSave.value[index]['id'],
-                              modelprovider.bookmarkArray[index]['id'],
-                          title:
-                              // bookmarkSave.value[index]['title'],
-                              modelprovider.bookmarkArray[index]['title'],
-                          publisher:
-                              // bookmarkSave.value[index]['publisher'],
-                              modelprovider.bookmarkArray[index]['publisher'],
+                          imageUrl: recipesSaved[index]['imageUrl'],
+                          id: recipesSaved[index]['id'],
+                          title: recipesSaved[index]['title'],
+                          publisher: recipesSaved[index]['publisher'],
                           ontap: () {
                             modelprovider.loadModelRecipe(
-                              modelprovider.bookmarkArray[index]['id'],
-                              // bookmarkSave.value[index]['id'],
+                              recipesSaved[index]['id'],
                             );
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //     builder: (context) => RecipePage(id: ,),
-                            //   ),
-                            // );
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RecipePage(),
+                              ),
+                            );
                           },
                           removeCard: () {
-                            modelprovider.removeRecipeFromBook(
-                              modelprovider.bookmarkArray[index]['id'],
-                            );
+                            removeRecipeFromBook(recipesSaved[index]['id']);
                           },
                         );
                       },
@@ -109,5 +114,14 @@ class _BookmarkPageState extends State<BookmarkPage> {
         SizedBox(height: 20),
       ],
     );
+  }
+
+  void removeRecipeFromBook(String id) {
+    List recipes = box.get('recipeList') ?? [];
+    recipes.removeWhere((recipe) => recipe['id'] == id);
+    box.put('recipeList', recipes);
+    setState(() {
+      recipesSaved = recipes;
+    });
   }
 }

@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.forkify_app"
-    ndkVersion =flutter.ndkVersion
+    ndkVersion = "27.0.12077973"
     compileSdk =  flutter.compileSdkVersion
     // compileSdkVersion 33 
     compileOptions {

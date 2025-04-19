@@ -18,20 +18,11 @@ class RecipeView extends StatefulWidget {
 
 class _RecipeViewState extends State<RecipeView> {
   // SAVE DATA LOCALLY -------------------------------->
-  final box = Hive.box('favoris');
 
-  void saveRecipe(Map<String, dynamic> recipe) {
+  bool isSaved(Map<String, dynamic> recipe) {
+    final box = Hive.box('favoris');
     List prefs = box.get('recipeList', defaultValue: []);
-
-    if (prefs.any((rep) => rep['id'] == recipe['id'])) {
-      recipe['isBookmarked'] = false;
-      prefs.remove(recipe);
-    } else {
-      recipe['isBookmarked'] = true;
-      prefs.add(recipe);
-    }
-
-    box.put('recipeList', prefs);
+    return prefs.any((rep) => rep['id'] == recipe['id']);
   }
 
   @override
@@ -135,14 +126,16 @@ class _RecipeViewState extends State<RecipeView> {
                               child: IconButtonWidget(
                                 onTap: () {
                                   setState(() {
-                                    saveRecipe(modelProvider.currentRecipe!);
+                                    modelProvider.saveRecipe(
+                                      modelProvider.currentRecipe!,
+                                    );
                                   });
                                 },
                                 height: 40,
                                 width: 40,
                                 // iconColor: Kcolors.primaryColor,
                                 icon:
-                                    modelProvider.currentRecipe!['isBookmarked']
+                                    isSaved(modelProvider.currentRecipe!)
                                         ? Icons.bookmark
                                         : Icons.bookmark_border,
                               ),
